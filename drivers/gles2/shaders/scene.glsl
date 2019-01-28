@@ -683,8 +683,13 @@ VERTEX_SHADER_CODE
 #define mediump
 #define highp
 #else
-precision mediump float;
+#if defined(USE_HIGHP_PRECISION)
+precision highp float;
 precision highp int;
+#else
+precision mediump float;
+precision mediump int;
+#endif
 #endif
 
 #include "stdlib.glsl"
@@ -1489,6 +1494,12 @@ FRAGMENT_SHADER_CODE
 
 #if defined(ALPHA_SCISSOR_USED)
 	if (alpha < alpha_scissor) {
+		discard;
+	}
+#endif
+
+#ifdef USE_DEPTH_PREPASS
+	if (alpha < 0.99) {
 		discard;
 	}
 #endif
