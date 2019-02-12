@@ -576,8 +576,15 @@ void RasterizerCanvasGLES2::_canvas_item_render_commands(Item *p_item, Item *cur
 							glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 						}
 					} else {
+						static const Vector2 uvs[4] = {
+							Vector2(0.0, 0.0),
+							Vector2(0.0, 1.0),
+							Vector2(1.0, 1.0),
+							Vector2(1.0, 0.0),
+						};
+
 						state.canvas_shader.set_uniform(CanvasShaderGLES2::COLOR_TEXPIXEL_SIZE, Vector2());
-						_draw_gui_primitive(4, points, NULL, NULL);
+						_draw_gui_primitive(4, points, NULL, uvs);
 					}
 
 				} else {
@@ -1878,6 +1885,8 @@ void RasterizerCanvasGLES2::draw_window_margins(int *black_margin, RID *black_im
 
 		draw_generic_textured_rect(Rect2(0, window_h - black_margin[MARGIN_BOTTOM], window_w, black_margin[MARGIN_BOTTOM]), Rect2(0, 0, 1, 1));
 	}
+
+	canvas_end();
 }
 
 void RasterizerCanvasGLES2::initialize() {
