@@ -1178,6 +1178,11 @@ bool RasterizerSceneGLES2::_setup_material(RasterizerStorageGLES2::Material *p_m
 
 	state.scene_shader.set_custom_shader(p_material->shader->custom_code_id);
 
+	if (p_material->shader->spatial.uses_screen_texture && storage->frame.current_rt) {
+		glActiveTexture(GL_TEXTURE0 + storage->config.max_texture_image_units - 4);
+		glBindTexture(GL_TEXTURE_2D, storage->frame.current_rt->copy_screen_effect.color);
+	}
+
 	bool shader_rebind = state.scene_shader.bind();
 
 	if (p_material->shader->spatial.no_depth_test) {
@@ -2336,7 +2341,7 @@ void RasterizerSceneGLES2::_render_render_list(RenderList::Element **p_elements,
 						Transform sky_orientation(p_env->sky_orientation, Vector3(0.0, 0.0, 0.0));
 						state.scene_shader.set_uniform(SceneShaderGLES2::RADIANCE_INVERSE_XFORM, sky_orientation.affine_inverse() * p_view_transform);
 					} else {
-						// would be a bit weird if we dont have this...
+						// would be a bit weird if we don't have this...
 						state.scene_shader.set_uniform(SceneShaderGLES2::RADIANCE_INVERSE_XFORM, p_view_transform);
 					}
 				}
@@ -2593,6 +2598,7 @@ void RasterizerSceneGLES2::render_scene(const Transform &p_cam_transform, const 
 		viewport_height = storage->frame.current_rt->height;
 	}
 
+	state.used_screen_texture = false;
 	state.viewport_size.x = viewport_width;
 	state.viewport_size.y = viewport_height;
 	state.screen_pixel_size.x = 1.0 / viewport_width;
@@ -2601,7 +2607,7 @@ void RasterizerSceneGLES2::render_scene(const Transform &p_cam_transform, const 
 	//push back the directional lights
 
 	if (p_light_cull_count) {
-		//harcoded limit of 256 lights
+		//hardcoded limit of 256 lights
 		render_light_instance_count = MIN(RenderList::MAX_LIGHTS, p_light_cull_count);
 		render_light_instances = (LightInstance **)alloca(sizeof(LightInstance *) * render_light_instance_count);
 		render_directional_lights = 0;
@@ -2615,7 +2621,7 @@ void RasterizerSceneGLES2::render_scene(const Transform &p_cam_transform, const 
 
 			if (light->light_ptr->type == VS::LIGHT_DIRECTIONAL) {
 				render_directional_lights++;
-				//as goin in reverse, directional lights are always first anyway
+				//as going in reverse, directional lights are always first anyway
 			}
 
 			light->light_index = index;
@@ -2728,6 +2734,10 @@ void RasterizerSceneGLES2::render_scene(const Transform &p_cam_transform, const 
 	render_list.sort_by_key(false);
 	_render_render_list(render_list.elements, render_list.element_count, cam_transform, p_cam_projection, p_shadow_atlas, env, env_radiance_tex, 0.0, 0.0, reverse_cull, false, false);
 
+	if (storage->frame.current_rt && state.used_screen_texture) {
+		//copy screen texture
+		storage->canvas->_copy_screen(Rect2());
+	}
 	// alpha pass
 
 	glBlendEquation(GL_FUNC_ADD);
