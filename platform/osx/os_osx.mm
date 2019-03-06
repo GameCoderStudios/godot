@@ -1096,6 +1096,7 @@ static int remapKey(unsigned int key) {
 inline void sendScrollEvent(int button, double factor, int modifierFlags) {
 
 	unsigned int mask = 1 << (button - 1);
+	Vector2 mouse_pos = Vector2(mouse_x, mouse_y);
 
 	Ref<InputEventMouseButton> sc;
 	sc.instance();
@@ -1104,14 +1105,18 @@ inline void sendScrollEvent(int button, double factor, int modifierFlags) {
 	sc->set_button_index(button);
 	sc->set_factor(factor);
 	sc->set_pressed(true);
-	Vector2 mouse_pos = Vector2(mouse_x, mouse_y);
 	sc->set_position(mouse_pos);
 	sc->set_global_position(mouse_pos);
 	button_mask |= mask;
 	sc->set_button_mask(button_mask);
 	OS_OSX::singleton->push_input(sc);
 
+	sc.instance();
+	sc->set_button_index(button);
+	sc->set_factor(factor);
 	sc->set_pressed(false);
+	sc->set_position(mouse_pos);
+	sc->set_global_position(mouse_pos);
 	button_mask &= ~mask;
 	sc->set_button_mask(button_mask);
 	OS_OSX::singleton->push_input(sc);
@@ -1420,7 +1425,7 @@ Error OS_OSX::initialize(const VideoMode &p_desired, int p_video_driver, int p_a
 				RasterizerGLES3::make_current();
 				break;
 			} else {
-				if (GLOBAL_GET("rendering/quality/driver/driver_fallback") == "Best" || editor) {
+				if (GLOBAL_GET("rendering/quality/driver/fallback_to_gles2") || editor) {
 					p_video_driver = VIDEO_DRIVER_GLES2;
 					gles3 = false;
 					continue;
