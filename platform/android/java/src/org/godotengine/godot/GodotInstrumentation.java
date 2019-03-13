@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  csg_gizmos.h                                                         */
+/*  GodotInstrumentation.java                                            */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,36 +28,23 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef CSG_GIZMOS_H
-#define CSG_GIZMOS_H
+package org.godotengine.godot;
 
-#include "csg_shape.h"
-#include "editor/editor_plugin.h"
-#include "editor/spatial_editor_gizmos.h"
+import android.app.Instrumentation;
+import android.content.Intent;
+import android.os.Bundle;
 
-class CSGShapeSpatialGizmoPlugin : public EditorSpatialGizmoPlugin {
+public class GodotInstrumentation extends Instrumentation {
+	private Intent intent;
 
-	GDCLASS(CSGShapeSpatialGizmoPlugin, EditorSpatialGizmoPlugin);
+	@Override
+	public void onCreate(Bundle arguments) {
+		intent = arguments.getParcelable("intent");
+		start();
+	}
 
-public:
-	bool has_gizmo(Spatial *p_spatial);
-	String get_name() const;
-	int get_priority() const;
-	bool is_selectable_when_hidden() const;
-	void redraw(EditorSpatialGizmo *p_gizmo);
-
-	String get_handle_name(const EditorSpatialGizmo *p_gizmo, int p_idx) const;
-	Variant get_handle_value(EditorSpatialGizmo *p_gizmo, int p_idx) const;
-	void set_handle(EditorSpatialGizmo *p_gizmo, int p_idx, Camera *p_camera, const Point2 &p_point);
-	void commit_handle(EditorSpatialGizmo *p_gizmo, int p_idx, const Variant &p_restore, bool p_cancel);
-
-	CSGShapeSpatialGizmoPlugin();
-};
-
-class EditorPluginCSG : public EditorPlugin {
-	GDCLASS(EditorPluginCSG, EditorPlugin)
-public:
-	EditorPluginCSG(EditorNode *p_editor);
-};
-
-#endif // CSG_GIZMOS_H
+	@Override
+	public void onStart() {
+		startActivitySync(intent);
+	}
+}
