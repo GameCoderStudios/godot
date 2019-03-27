@@ -554,6 +554,7 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	_initial_set("editors/poly_editor/show_previous_outline", true);
 
 	// Animation
+	_initial_set("editors/animation/step", 0.01);
 	_initial_set("editors/animation/autorename_animation_tracks", true);
 	_initial_set("editors/animation/confirm_insert_track", true);
 	_initial_set("editors/animation/onion_layers_past_color", Color(1, 0, 0));
