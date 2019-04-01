@@ -30,7 +30,7 @@
 
 #include "animation.h"
 #include "scene/scene_string_names.h"
-#include "editor/editor_settings.h"
+
 #include "core/math/geometry.h"
 
 #define ANIM_MIN_LENGTH 0.001
@@ -2988,7 +2988,7 @@ void Animation::optimize(float p_allowed_linear_err, float p_allowed_angular_err
 
 Animation::Animation() {
 
-	step = EDITOR_GET("editors/animation/step");
+	step = 0.01;
 	loop = false;
 	length = 1;
 }
