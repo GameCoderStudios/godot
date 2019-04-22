@@ -1760,6 +1760,8 @@ void SceneTreeDock::_create() {
 			replace_node(n, newnode);
 		}
 	}
+
+	scene_tree->get_scene_tree()->call_deferred("grab_focus");
 }
 
 void SceneTreeDock::replace_node(Node *p_node, Node *p_by_node, bool p_keep_properties) {
@@ -1801,7 +1803,7 @@ void SceneTreeDock::replace_node(Node *p_node, Node *p_by_node, bool p_keep_prop
 			Object::Connection &c = F->get();
 			if (!(c.flags & Object::CONNECT_PERSIST))
 				continue;
-			newnode->connect(c.signal, c.target, c.method, varray(), Object::CONNECT_PERSIST);
+			newnode->connect(c.signal, c.target, c.method, c.binds, Object::CONNECT_PERSIST);
 		}
 	}
 

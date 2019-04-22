@@ -2225,6 +2225,8 @@ GDScriptParser::PatternNode *GDScriptParser::_parse_pattern(bool p_static) {
 void GDScriptParser::_parse_pattern_block(BlockNode *p_block, Vector<PatternBranchNode *> &p_branches, bool p_static) {
 	int indent_level = tab_level.back()->get();
 
+	p_block->has_return = true;
+
 	while (true) {
 
 		while (tokenizer->get_token() == GDScriptTokenizer::TK_NEWLINE && _parse_newline())
@@ -2282,8 +2284,8 @@ void GDScriptParser::_parse_pattern_block(BlockNode *p_block, Vector<PatternBran
 
 		current_block = p_block;
 
-		if (catch_all && branch->body->has_return) {
-			p_block->has_return = true;
+		if (!branch->body->has_return) {
+			p_block->has_return = false;
 		}
 
 		p_branches.push_back(branch);
@@ -3677,6 +3679,11 @@ void GDScriptParser::_parse_class(ClassNode *p_class) {
 						_add_warning(GDScriptWarning::FUNCTION_CONFLICTS_VARIABLE, -1, name);
 					}
 				}
+				for (int i = 0; i < p_class->subclasses.size(); i++) {
+					if (p_class->subclasses[i]->name == name) {
+						_add_warning(GDScriptWarning::FUNCTION_CONFLICTS_CONSTANT, -1, name);
+					}
+				}
 #endif // DEBUG_ENABLED
 
 				if (tokenizer->get_token() != GDScriptTokenizer::TK_PARENTHESIS_OPEN) {
@@ -4619,6 +4626,13 @@ void GDScriptParser::_parse_class(ClassNode *p_class) {
 						return;
 					}
 				}
+
+				for (int i = 0; i < current_class->subclasses.size(); i++) {
+					if (current_class->subclasses[i]->name == member.identifier) {
+						_set_error("A class named '" + String(member.identifier) + "' already exists in this class (at line " + itos(current_class->subclasses[i]->line) + ").");
+						return;
+					}
+				}
 #ifdef DEBUG_ENABLED
 				for (int i = 0; i < current_class->functions.size(); i++) {
 					if (current_class->functions[i]->name == member.identifier) {
@@ -4863,6 +4877,13 @@ void GDScriptParser::_parse_class(ClassNode *p_class) {
 					}
 				}
 
+				for (int i = 0; i < current_class->subclasses.size(); i++) {
+					if (current_class->subclasses[i]->name == const_id) {
+						_set_error("A class named '" + String(const_id) + "' already exists in this class (at line " + itos(current_class->subclasses[i]->line) + ").");
+						return;
+					}
+				}
+
 				tokenizer->advance();
 
 				if (tokenizer->get_token() == GDScriptTokenizer::TK_COLON) {
@@ -4929,6 +4950,13 @@ void GDScriptParser::_parse_class(ClassNode *p_class) {
 						if (current_class->variables[i].identifier == enum_name) {
 							_set_error("A variable named '" + String(enum_name) + "' already exists in this class (at line: " +
 									   itos(current_class->variables[i].line) + ").");
+							return;
+						}
+					}
+
+					for (int i = 0; i < current_class->subclasses.size(); i++) {
+						if (current_class->subclasses[i]->name == enum_name) {
+							_set_error("A class named '" + String(enum_name) + "' already exists in this class (at line " + itos(current_class->subclasses[i]->line) + ").");
 							return;
 						}
 					}
@@ -5014,6 +5042,13 @@ void GDScriptParser::_parse_class(ClassNode *p_class) {
 								if (current_class->variables[i].identifier == const_id) {
 									_set_error("A variable named '" + String(const_id) + "' already exists in this class (at line: " +
 											   itos(current_class->variables[i].line) + ").");
+									return;
+								}
+							}
+
+							for (int i = 0; i < current_class->subclasses.size(); i++) {
+								if (current_class->subclasses[i]->name == const_id) {
+									_set_error("A class named '" + String(const_id) + "' already exists in this class (at line " + itos(current_class->subclasses[i]->line) + ").");
 									return;
 								}
 							}
