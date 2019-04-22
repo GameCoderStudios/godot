@@ -470,10 +470,12 @@ bool EditorPropertyRevert::can_property_revert(Object *p_object, const StringNam
 
 	if (!has_revert && !p_object->get_script().is_null()) {
 		Ref<Script> scr = p_object->get_script();
-		Variant orig_value;
-		if (scr->get_property_default_value(p_property, orig_value)) {
-			if (orig_value != p_object->get(p_property)) {
-				has_revert = true;
+		if (scr.is_valid()) {
+			Variant orig_value;
+			if (scr->get_property_default_value(p_property, orig_value)) {
+				if (orig_value != p_object->get(p_property)) {
+					has_revert = true;
+				}
 			}
 		}
 	}
@@ -668,11 +670,13 @@ void EditorProperty::_gui_input(const Ref<InputEvent> &p_event) {
 
 			if (!object->get_script().is_null()) {
 				Ref<Script> scr = object->get_script();
-				Variant orig_value;
-				if (scr->get_property_default_value(property, orig_value)) {
-					emit_changed(property, orig_value);
-					update_property();
-					return;
+				if (scr.is_valid()) {
+					Variant orig_value;
+					if (scr->get_property_default_value(property, orig_value)) {
+						emit_changed(property, orig_value);
+						update_property();
+						return;
+					}
 				}
 			}
 
@@ -1370,6 +1374,30 @@ void EditorInspector::_parse_added_editors(VBoxContainer *current_vbox, Ref<Edit
 	ped->added_editors.clear();
 }
 
+bool EditorInspector::_is_property_disabled_by_feature_profile(const StringName &p_property) {
+
+	Ref<EditorFeatureProfile> profile = EditorFeatureProfileManager::get_singleton()->get_current_profile();
+	if (profile.is_null()) {
+		return false;
+	}
+
+	StringName class_name = object->get_class();
+
+	while (class_name != StringName()) {
+
+		if (profile->is_class_property_disabled(class_name, p_property)) {
+			return true;
+		}
+		if (profile->is_class_disabled(class_name)) {
+			//won't see properties of a disabled class
+			return true;
+		}
+		class_name = ClassDB::get_parent_class(class_name);
+	}
+
+	return false;
+}
+
 void EditorInspector::update_tree() {
 
 	//to update properly if all is refreshed
@@ -1499,7 +1527,7 @@ void EditorInspector::update_tree() {
 					if (E) {
 						descr = E->get().brief_description;
 					}
-					class_descr_cache[type2] = descr.word_wrap(80);
+					class_descr_cache[type2] = descr;
 				}
 
 				category->set_tooltip(p.name + "::" + (class_descr_cache[type2] == "" ? "" : class_descr_cache[type2]));
@@ -1513,7 +1541,7 @@ void EditorInspector::update_tree() {
 
 			continue;
 
-		} else if (!(p.usage & PROPERTY_USAGE_EDITOR))
+		} else if (!(p.usage & PROPERTY_USAGE_EDITOR) || _is_property_disabled_by_feature_profile(p.name))
 			continue;
 
 		if (p.usage & PROPERTY_USAGE_HIGH_END_GFX && VS::get_singleton()->is_low_end())
@@ -1651,7 +1679,7 @@ void EditorInspector::update_tree() {
 				while (F && descr == String()) {
 					for (int i = 0; i < F->get().properties.size(); i++) {
 						if (F->get().properties[i].name == propname.operator String()) {
-							descr = F->get().properties[i].description.strip_edges().word_wrap(80);
+							descr = F->get().properties[i].description.strip_edges();
 							break;
 						}
 					}
@@ -2132,6 +2160,10 @@ void EditorInspector::_node_removed(Node *p_node) {
 
 void EditorInspector::_notification(int p_what) {
 
+	if (p_what == NOTIFICATION_READY) {
+		EditorFeatureProfileManager::get_singleton()->connect("current_feature_profile_changed", this, "_feature_profile_changed");
+	}
+
 	if (p_what == NOTIFICATION_ENTER_TREE) {
 
 		if (sub_inspector) {
@@ -2238,6 +2270,11 @@ String EditorInspector::get_object_class() const {
 	return object_class;
 }
 
+void EditorInspector::_feature_profile_changed() {
+
+	update_tree();
+}
+
 void EditorInspector::_bind_methods() {
 
 	ClassDB::bind_method("_property_changed", &EditorInspector::_property_changed, DEFVAL(""), DEFVAL(false));
@@ -2254,6 +2291,7 @@ void EditorInspector::_bind_methods() {
 	ClassDB::bind_method("_resource_selected", &EditorInspector::_resource_selected);
 	ClassDB::bind_method("_object_id_selected", &EditorInspector::_object_id_selected);
 	ClassDB::bind_method("_vscroll_changed", &EditorInspector::_vscroll_changed);
+	ClassDB::bind_method("_feature_profile_changed", &EditorInspector::_feature_profile_changed);
 
 	ClassDB::bind_method("refresh", &EditorInspector::refresh);
 

@@ -384,8 +384,6 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 			outside = true;
 			if (main_loop && mouse_mode != MOUSE_MODE_CAPTURED)
 				main_loop->notification(MainLoop::NOTIFICATION_WM_MOUSE_EXIT);
-			if (input)
-				input->set_mouse_in_window(false);
 
 		} break;
 		case WM_INPUT: {
@@ -480,8 +478,6 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 
 				if (main_loop && mouse_mode != MOUSE_MODE_CAPTURED)
 					main_loop->notification(MainLoop::NOTIFICATION_WM_MOUSE_ENTER);
-				if (input)
-					input->set_mouse_in_window(true);
 
 				CursorShape c = cursor_shape;
 				cursor_shape = CURSOR_MAX;
@@ -670,7 +666,9 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 						mb->set_button_index(BUTTON_XBUTTON2);
 					mb->set_doubleclick(true);
 				} break;
-				default: { return 0; }
+				default: {
+					return 0;
+				}
 			}
 
 			mb->set_control((wParam & MK_CONTROL) != 0);
@@ -2297,6 +2295,11 @@ void OS_Windows::set_cursor_shape(CursorShape p_shape) {
 	cursor_shape = p_shape;
 }
 
+OS::CursorShape OS_Windows::get_cursor_shape() const {
+
+	return cursor_shape;
+}
+
 void OS_Windows::set_custom_mouse_cursor(const RES &p_cursor, CursorShape p_shape, const Vector2 &p_hotspot) {
 	if (p_cursor.is_valid()) {
 		Ref<Texture> texture = p_cursor;
@@ -2867,39 +2870,41 @@ String OS_Windows::get_godot_dir_name() const {
 
 String OS_Windows::get_system_dir(SystemDir p_dir) const {
 
-	int id;
+	KNOWNFOLDERID id;
 
 	switch (p_dir) {
 		case SYSTEM_DIR_DESKTOP: {
-			id = CSIDL_DESKTOPDIRECTORY;
+			id = FOLDERID_Desktop;
 		} break;
 		case SYSTEM_DIR_DCIM: {
-			id = CSIDL_MYPICTURES;
+			id = FOLDERID_Pictures;
 		} break;
 		case SYSTEM_DIR_DOCUMENTS: {
-			id = CSIDL_PERSONAL;
+			id = FOLDERID_Documents;
 		} break;
 		case SYSTEM_DIR_DOWNLOADS: {
-			id = 0x000C;
+			id = FOLDERID_Downloads;
 		} break;
 		case SYSTEM_DIR_MOVIES: {
-			id = CSIDL_MYVIDEO;
+			id = FOLDERID_Videos;
 		} break;
 		case SYSTEM_DIR_MUSIC: {
-			id = CSIDL_MYMUSIC;
+			id = FOLDERID_Music;
 		} break;
 		case SYSTEM_DIR_PICTURES: {
-			id = CSIDL_MYPICTURES;
+			id = FOLDERID_Pictures;
 		} break;
 		case SYSTEM_DIR_RINGTONES: {
-			id = CSIDL_MYMUSIC;
+			id = FOLDERID_Music;
 		} break;
 	}
 
-	WCHAR szPath[MAX_PATH];
-	HRESULT res = SHGetFolderPathW(NULL, id, NULL, 0, szPath);
+	PWSTR szPath;
+	HRESULT res = SHGetKnownFolderPath(id, 0, NULL, &szPath);
 	ERR_FAIL_COND_V(res != S_OK, String());
-	return String(szPath);
+	String path = String(szPath);
+	CoTaskMemFree(szPath);
+	return path;
 }
 
 String OS_Windows::get_user_data_dir() const {

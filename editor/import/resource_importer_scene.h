@@ -146,7 +146,7 @@ public:
 
 	void _make_external_resources(Node *p_node, const String &p_base_path, String &p_subdir_name, bool p_make_animations, const String &p_animations_path, bool p_keep_animations, bool p_make_materials, const String &p_materials_path, bool p_keep_materials, bool p_make_meshes, const String &p_meshes_path, Map<Ref<Animation>, Ref<Animation> > &p_animations, Map<Ref<Material>, Ref<Material> > &p_materials, Map<Ref<ArrayMesh>, Ref<ArrayMesh> > &p_meshes);
 
-	Node *_fix_node(Node *p_node, Node *p_root, Map<Ref<ArrayMesh>, Ref<Shape> > &collision_map, LightBakeMode p_light_bake_mode);
+	Node *_fix_node(Node *p_node, Node *p_root, Map<Ref<Mesh>, List<Ref<Shape> > > &collision_map, LightBakeMode p_light_bake_mode);
 
 	void _create_clips(Node *scene, const Array &p_clips, bool p_bake_all);
 	void _filter_anim_tracks(Ref<Animation> anim, Set<String> &keep);

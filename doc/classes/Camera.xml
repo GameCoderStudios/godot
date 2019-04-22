@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="Camera" inherits="Spatial" category="Core" version="3.1">
+<class name="Camera" inherits="Spatial" category="Core" version="3.2">
 	<brief_description>
 		Camera node, displays from a point of view.
 	</brief_description>
@@ -8,8 +8,6 @@
 	</description>
 	<tutorials>
 	</tutorials>
-	<demos>
-	</demos>
 	<methods>
 		<method name="clear_current">
 			<return type="void">
@@ -17,7 +15,7 @@
 			<argument index="0" name="enable_next" type="bool" default="true">
 			</argument>
 			<description>
-				If this is the current Camera, remove it from being current. If [code]enable_next[/code] is true, request to make the next Camera current, if any.
+				If this is the current Camera, remove it from being current. If [code]enable_next[/code] is [code]true[/code], request to make the next Camera current, if any.
 			</description>
 		</method>
 		<method name="get_camera_transform" qualifiers="const">
