@@ -211,12 +211,14 @@ void EditorProperty::_notification(int p_what) {
 		}
 
 		int ofs = 0;
+		int text_limit = text_size;
+
 		if (checkable) {
 			Ref<Texture> checkbox;
 			if (checked)
-				checkbox = get_icon("checked", "CheckBox");
+				checkbox = get_icon("GuiChecked", "EditorIcons");
 			else
-				checkbox = get_icon("unchecked", "CheckBox");
+				checkbox = get_icon("GuiUnchecked", "EditorIcons");
 
 			Color color2(1, 1, 1);
 			if (check_hover) {
@@ -228,11 +230,10 @@ void EditorProperty::_notification(int p_what) {
 			draw_texture(checkbox, check_rect.position, color2);
 			ofs += get_constant("hseparator", "Tree");
 			ofs += checkbox->get_width();
+			text_limit -= ofs;
 		} else {
 			check_rect = Rect2();
 		}
-
-		int text_limit = text_size;
 
 		if (can_revert) {
 			Ref<Texture> reload_icon = get_icon("ReloadSmall", "EditorIcons");
@@ -298,7 +299,7 @@ StringName EditorProperty::get_edited_property() {
 
 void EditorProperty::update_property() {
 	if (get_script_instance())
-		get_script_instance()->call("update_property");
+		get_script_instance()->call("_update_property");
 }
 
 void EditorProperty::set_read_only(bool p_read_only) {
@@ -645,7 +646,7 @@ void EditorProperty::_gui_input(const Ref<InputEvent> &p_event) {
 
 			if (use_keying_next()) {
 				call_deferred("emit_changed", property, object->get(property).operator int64_t() + 1, "", false);
-				call_deferred("update_property");
+				call_deferred("_update_property");
 			}
 		}
 
@@ -822,7 +823,7 @@ void EditorProperty::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("selected", PropertyInfo(Variant::STRING, "path"), PropertyInfo(Variant::INT, "focusable_idx")));
 
 	MethodInfo vm;
-	vm.name = "update_property";
+	vm.name = "_update_property";
 	BIND_VMETHOD(vm);
 }
 
